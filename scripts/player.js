@@ -73,7 +73,11 @@ var createPlayer = function createPlayer(game, options) {
     run: function run(direction) {
       var maxSpeed = 64;
       var acceleration = player.body.touching.down ? 8 : 3; // players have less control in the air
-      player.orientation = direction;
+      
+      if (player.orientation != direction) {
+        player.scale.x *= -1;
+        player.orientation = direction;
+      }
 
       switch (direction) {
         case 'left':
@@ -90,21 +94,6 @@ var createPlayer = function createPlayer(game, options) {
           } else {
             player.body.velocity.x = Math.min(player.body.velocity.x + acceleration, maxSpeed);
           }
-          break;
-      }
-
-      actions.orientHearts(direction);
-    },
-    
-    // TODO: fix left hearts position when hp is less than max
-    orientHearts: function orientHearts(direction) {
-      var heartDistance = 1.1; // how close hearts float by player
-      switch (direction) {
-        case 'left':
-          player.hearts.anchor.setTo(-heartDistance, 0);
-          break;
-        case 'right':
-          player.hearts.anchor.setTo(heartDistance, 0);
           break;
       }
     },
@@ -179,9 +168,6 @@ var createPlayer = function createPlayer(game, options) {
 
     updateHearts: function() {
       var healthPercentage = player.hp / player.maxHp;
-      var cropWidth = Math.ceil(healthPercentage * heartsWidth);
-      var cropRect = new Phaser.Rectangle(0, 0, cropWidth, player.hearts.height);
-      player.hearts.crop(cropRect);
     },
 
     die: function() {
@@ -232,14 +218,29 @@ var createPlayer = function createPlayer(game, options) {
   player.actions = actions;
 
   // track health
-  player.hp = player.maxHp = 6; // TODO: allow setting custom hp amount for each player
-  player.hearts = game.add.sprite(0, 0, 'hearts');
-  var heartsWidth = player.hearts.width;
-  player.hearts.setScaleMinMax(1, 1); // prevent hearts scaling w/ player
-  var bob = player.hearts.animations.add('bob', [0,1,2,1], 3, true); // name, frames, framerate, loop
-  player.hearts.animations.play('bob');
+  player.hp = player.maxHp = 7; // TODO: allow setting custom hp amount for each player
+  player.hearts = game.add.group();
+  function addHeart() {
+    var orientation = player.orientation === 'left' ? 1 : -1;
+    var heart = game.add.sprite((i + 1) * orientation, 0, 'hearts');
+    player.hearts.add(heart);
+    return heart;
+  }
+  for (var i=0; i<player.hp; i+=2) {
+    var heart = addHeart(i);
+    if (i % 4 === 0) {
+      heart.position.y -= 1;
+    }
+  }
+  
+  if (player.hp % 2 === 1) {
+    addHeart(7).frame = 1;  
+  }
+  
+  player.hearts.forEach(function(heart) {
+    heart.setScaleMinMax(1, 1); // prevent hearts scaling w/ player
+  });
   player.addChild(player.hearts);
-  actions.orientHearts(player.orientation);
 
   // phaser apparently automatically calls any function named update attached to a sprite!
   player.update = function() {

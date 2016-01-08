@@ -34,7 +34,7 @@ var preload = function preload() {
   game.load.image('purple', 'images/purple.png');
   game.load.image('green', 'images/green.png');
   game.load.image('white', 'images/white.png');
-  game.load.spritesheet('hearts', 'images/hearts.png', 9, 5); // player health
+  game.load.spritesheet('hearts', 'images/hearts.png', 3, 3); // player health
 };
 
 var create = function create() {
