@@ -220,23 +220,26 @@ var createPlayer = function createPlayer(game, options) {
   // track health
   player.hp = player.maxHp = 7; // TODO: allow setting custom hp amount for each player
   player.hearts = game.add.group();
-  function addHeart() {
+  function addHeart(i) {
     var orientation = player.orientation === 'left' ? 1 : -1;
-    var heart = game.add.sprite((i + 1) * orientation, 0, 'hearts');
+    var heart = game.add.sprite((i + 3) * 2 * orientation / settings.scale.x, 0, 'hearts');
     player.hearts.add(heart);
     return heart;
   }
-  for (var i=0; i<player.hp; i+=2) {
-    var heart = addHeart(i);
-    if (i % 4 === 0) {
-      heart.position.y -= 1;
+  
+  for (var i=0; i<player.hp; i +=1 ) {
+    if (i % 2 === 0) {
+      var heart = addHeart(i);
+      if (i % 4 === 0) {
+        heart.position.y -= 1 / settings.scale.y;
+      }
+    }
+
+    if (player.hp % 2 === 1 && i === player.hp) {
+      addHeart(i).frame = 1;
     }
   }
-  
-  if (player.hp % 2 === 1) {
-    addHeart(7).frame = 1;  
-  }
-  
+
   player.hearts.forEach(function(heart) {
     heart.setScaleMinMax(1, 1); // prevent hearts scaling w/ player
   });
