@@ -341,7 +341,7 @@ game.state.add('main', main);
 game.state.start('main');
 
 },{"./states/play.js":12,"./states/splash.js":13,"./utils.js":14}],8:[function(require,module,exports){
-var buildMenu = function buildMenu(game, restart) {
+var buildMenu = function buildMenu(game, state) {
   var itemHeight = 20;
   var gamepad = game.input.gamepad.pad1;
   var utils = require('./utils.js');
@@ -458,26 +458,34 @@ var buildMenu = function buildMenu(game, restart) {
     }
     this.setting.selected = this.setting.options[optionIndex];
     renderMenu();
-    restart();
   };
 
   var menu = [{
     name: 'Players',
     setting: settings.playerCount,
-    action: cycleSetting,
+    action: function() {
+      cycleSetting.call(this);
+      state.restart();
+    },
     selected: true
   }, {
     name: 'BGM',
     setting: settings.bgm,
-    action: cycleSetting
+    action: function() {
+      cycleSetting.call(this);
+      state.resetMusic(settings);
+    },
   }, {
     name: 'Stage',
     setting: settings.stage,
-    action: cycleSetting
+    action: function() {
+      cycleSetting.call(this);
+      state.restart();
+    },
   }, {
     name: 'Start',
     action: function() {
-      restart();
+      state.restart();
       toggleMenu();
     }
   }].map(function(item, i) {
@@ -1003,11 +1011,22 @@ var Play = function(game) {
       
       // menu
       var buildMenu = require('../menu.js');
-      self.menu = buildMenu(game, self.restart.bind(self)); // TODO: come up with better way to let menu restart game
+      self.menu = buildMenu(game, self); // TODO: is there a better approach than injecting the whole state into the menu to let it access functions for resetting stage, players, music?
 
       self.restart();
       game.physics.startSystem(Phaser.Physics.ARCADE);
       game.input.gamepad.start();
+    },
+
+    resetMusic: function(settings) {
+      // play music
+      if (this.music) {
+        this.music.stop();
+      }
+      if (settings.bgm.selected !== 'None') {
+        this.music = game.add.audio(settings.bgm.selected);
+        this.music.loopFull();
+      }
     },
 
     restart: function restart() {
@@ -1017,15 +1036,6 @@ var Play = function(game) {
       var utils = require('../utils.js');
       var stageBuilder = require('../stageBuilder.js')(game);
       var stage = utils.getStage();
-
-      // play music
-      if (self.music) {
-        self.music.stop();
-      }
-      if (settings.bgm.selected !== 'None') {
-        self.music = game.add.audio(settings.bgm.selected);
-        self.music.loopFull();
-      }
 
       // destroy and rebuild stage and players
       var destroyGroup = function destroyGroup(group) {
@@ -1043,6 +1053,7 @@ var Play = function(game) {
       destroyGroup(self.players);
       destroyGroup(self.platforms);
       destroyGroup(self.backgrounds);
+
       // TODO: ugh, clean this up!
       if (self.backgrounds && self.backgrounds.loop) {
         game.time.events.remove(self.backgrounds.loop);
