@@ -193,7 +193,7 @@ if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
 }
 
 },{"submono":1}],3:[function(require,module,exports){
-var font = { font: "20px Helvetica", fill: "#ED1C24", align: "center", boundsAlignH: "center", boundsAlignV: "middle" };
+var font = { font: "20px Helvetica", fill: "#777", align: "center", boundsAlignH: "center", boundsAlignV: "middle" };
 
 module.exports = font;
 
@@ -284,7 +284,7 @@ var stages = [{
   backgrounds: [],
   foreground: 'clear',
   spawnPoints: [{x: 72, y: 44}, {x: 242, y: 44}, {x: 44, y: 88}, {x: 272, y: 88}],
-  uiColor: '#EEE'
+  uiColor: '#28D6F1'
 }, {
   name: 'Atari B',
   backgroundColor: '#000',
@@ -295,7 +295,7 @@ var stages = [{
   backgrounds: [],
   foreground: 'clear',
   spawnPoints: [{x: 48, y: 144}, {x: 96, y: 144}, {x: 204, y: 144}, {x: 252, y: 144}],
-  uiColor: '#EEE'
+  uiColor: '#28F129'
 }];
 
 module.exports = stages;
@@ -347,7 +347,6 @@ var buildMenu = function buildMenu(game, restart) {
   var utils = require('./utils.js');
   var settings = require('./data/settings.js');
   var font = require('./data/font.js');
-  var fontNormal = Object.assign({}, font, {fill: '#777'});
 
   var title = game.add.text(0, -itemHeight, 'OPTIONS', font);
   title.setTextBounds(0, 0, game.width, game.height);
@@ -444,7 +443,7 @@ var buildMenu = function buildMenu(game, restart) {
       if (item.selected) {
         item.text.setStyle(fontHighlight);
       } else {
-        item.text.setStyle(fontNormal);
+        item.text.setStyle(font);
       }
       var text = item.name + (item.setting ? ': ' + item.setting.selected.toString() : '');
       item.text.setText(text);
@@ -1017,6 +1016,7 @@ var Play = function(game) {
       var settings = require('../data/settings');
       var utils = require('../utils.js');
       var stageBuilder = require('../stageBuilder.js')(game);
+      var stage = utils.getStage();
 
       // play music
       if (self.music) {
@@ -1072,6 +1072,8 @@ var Play = function(game) {
             }
           });
           if (alivePlayers.length === 1) {
+            var font = Object.assign({}, require('../data/font.js'), {fill: stage.uiColor});
+            self.text.setStyle(font);
             self.text.setText(alivePlayers[0] + '  wins!\nPress start');
             self.text.visible = true;
             // TODO: accept keyboard input as well
@@ -1082,7 +1084,7 @@ var Play = function(game) {
         };
         var createPlayer = require('../player.js');
         var newPlayer = self.players.add(createPlayer(game, player, checkForGameOver));
-        var pos = utils.getStage().spawnPoints[i];
+        var pos = stage.spawnPoints[i];
         newPlayer.position.x = pos.x;
         newPlayer.position.y = pos.y;
       };
