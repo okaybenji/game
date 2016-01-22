@@ -203,9 +203,6 @@ var Players = function(game) {
       name: 'Orange',
       color: 'orange',
       gamepad: game.input.gamepad.pad1,
-      position: {
-        x: 72, y: 44
-      },
       keys: {
         up: 'W', down: 'S', left: 'A', right: 'D', attack: 'Q'
       },
@@ -213,17 +210,11 @@ var Players = function(game) {
       name: 'Yellow',
       color: 'yellow',
       gamepad: game.input.gamepad.pad2,
-      position: {
-        x: 248, y: 44
-      },
       orientation: 'left',
     }, {
       name: 'Pink',
       color: 'pink',
       gamepad: game.input.gamepad.pad3,
-      position: {
-        x: 72, y: 136
-      },
       keys: {
         up: 'I', down: 'K', left: 'J', right: 'L', attack: 'U'
       },
@@ -231,9 +222,6 @@ var Players = function(game) {
       name: 'Purple',
       color: 'purple',
       gamepad: game.input.gamepad.pad4,
-      position: {
-        x: 248, y: 136
-      },
       orientation: 'left',
       keys: {
         up: 'T', down: 'G', left: 'F', right: 'H', attack: 'R'
@@ -272,7 +260,7 @@ var stages = [{
   name: 'Alpha C',
   backgroundColor: '#4DD8FF',
   platforms: {
-    positions: [[48, 64], [224, 64], [136, 104], [48, 154,], [224, 154]],
+    positions: [[48, 64], [224, 64], [136, 104], [48, 154], [224, 154]],
     color: 'clear'
   },
   backgrounds: [{
@@ -283,25 +271,31 @@ var stages = [{
   },{
     image: 'ground'
   }],
-  foreground: 'foreground'
+  foreground: 'foreground',
+  spawnPoints: [{x: 72, y: 44}, {x: 242, y: 44}, {x: 72, y: 136}, {x: 242, y: 136}],
+  uiColor: '#D66122'
 }, {
-  name: 'Atari',
+  name: 'Atari A',
   backgroundColor: '#000',
   platforms: {
-    positions: [[48, 64], [224, 64], [136, 104], [48, 154,], [224, 154]],
+    positions: [[136, 32], [48, 64], [224, 64], [20, 112], [252, 112], [88,154], [136, 154], [184,154]],
     color: 'blue'
   },
   backgrounds: [],
-  foreground: 'clear'
+  foreground: 'clear',
+  spawnPoints: [{x: 72, y: 44}, {x: 242, y: 44}, {x: 44, y: 88}, {x: 272, y: 88}],
+  uiColor: '#EEE'
 }, {
-  name: 'Void',
+  name: 'Atari B',
   backgroundColor: '#000',
   platforms: {
-    positions: [],
-    color: 'clear'
+    positions: [[12, 172], [60, 172], [108, 172], [156, 172], [204, 172], [252, 172], [260, 172]], // TODO: had a little hole here... better check the math on the platform widths/locations
+    color: 'green'
   },
   backgrounds: [],
-  foreground: 'clear'
+  foreground: 'clear',
+  spawnPoints: [{x: 48, y: 144}, {x: 96, y: 144}, {x: 204, y: 144}, {x: 252, y: 144}],
+  uiColor: '#EEE'
 }];
 
 module.exports = stages;
@@ -350,11 +344,12 @@ game.state.start('main');
 var buildMenu = function buildMenu(game, restart) {
   var itemHeight = 20;
   var gamepad = game.input.gamepad.pad1;
+  var utils = require('./utils.js');
   var settings = require('./data/settings.js');
-  var fontHighlight = require('./data/font.js');
-  var fontNormal = Object.assign({}, fontHighlight, {fill: '#777'});
+  var font = require('./data/font.js');
+  var fontNormal = Object.assign({}, font, {fill: '#777'});
 
-  var title = game.add.text(0, -itemHeight, 'OPTIONS', fontHighlight);
+  var title = game.add.text(0, -itemHeight, 'OPTIONS', font);
   title.setTextBounds(0, 0, game.width, game.height);
 
   var selectFirstItem = function selectFirstItem() {
@@ -443,13 +438,15 @@ var buildMenu = function buildMenu(game, restart) {
   };
 
   var renderMenu = function renderMenu() {
+    var fontHighlight = Object.assign({}, font, {fill: utils.getStage().uiColor});
+    title.setStyle(fontHighlight);
     menu.forEach(function(item) {
       if (item.selected) {
         item.text.setStyle(fontHighlight);
       } else {
         item.text.setStyle(fontNormal);
       }
-      var text = item.name + (item.setting ? ': ' + item.setting.selected.toString() : ''); // TODO: why won't this display numeric settings?
+      var text = item.name + (item.setting ? ': ' + item.setting.selected.toString() : '');
       item.text.setText(text);
     });
   };
@@ -518,13 +515,9 @@ var buildMenu = function buildMenu(game, restart) {
 
 module.exports = buildMenu;
 
-},{"./data/font.js":3,"./data/settings.js":5}],9:[function(require,module,exports){
+},{"./data/font.js":3,"./data/settings.js":5,"./utils.js":14}],9:[function(require,module,exports){
 var createPlayer = function createPlayer(game, options, onDeath) {
   var defaults = {
-    position: {
-      x: 4,
-      y: 8
-    },
     orientation: 'right',
     keys: {
       up: 'UP',
@@ -735,7 +728,7 @@ var createPlayer = function createPlayer(game, options, onDeath) {
     }
   };
 
-  var player = game.add.sprite(settings.position.x, settings.position.y, settings.color);
+  var player = game.add.sprite(0, 0, settings.color);
   player.name = settings.name;
   player.orientation = settings.orientation;
   player.scale.setTo(settings.scale.x, settings.scale.y); // TODO: add giant mode
@@ -935,10 +928,8 @@ module.exports = sfx;
 },{"subpoly":2}],11:[function(require,module,exports){
 var stageBuilder = function stageBuilder(game) {
   var settings = require('./data/settings.js');
-  var stages = require('./data/stages.js');
-  var stage = stages.filter(function(stage) {
-    return stage.name === settings.stage.selected;
-  })[0];
+  var utils = require('./utils.js');
+  var stage = utils.getStage();
 
   game.stage.backgroundColor = stage.backgroundColor;
 
@@ -997,7 +988,7 @@ var stageBuilder = function stageBuilder(game) {
 
 module.exports = stageBuilder;
 
-},{"./data/settings.js":5,"./data/stages.js":6}],12:[function(require,module,exports){
+},{"./data/settings.js":5,"./utils.js":14}],12:[function(require,module,exports){
 var Play = function(game) {
   var play = {
     create: function create() {
@@ -1024,6 +1015,7 @@ var Play = function(game) {
       var self = this;
       var players = require('../data/players.js')(game);
       var settings = require('../data/settings');
+      var utils = require('../utils.js');
       var stageBuilder = require('../stageBuilder.js')(game);
 
       // play music
@@ -1074,7 +1066,7 @@ var Play = function(game) {
           }
 
           var alivePlayers = [];
-          self.players.children.forEach(function(player) {
+          self.players.children.forEach(function(player, i) {
             if (!player.isDead) {
               alivePlayers.push(player.name);
             }
@@ -1082,18 +1074,22 @@ var Play = function(game) {
           if (alivePlayers.length === 1) {
             self.text.setText(alivePlayers[0] + '  wins!\nPress start');
             self.text.visible = true;
+            // TODO: accept keyboard input as well
             game.input.gamepad.pad1.getButton(Phaser.Gamepad.XBOX360_START).onDown.addOnce(function() {
               self.text.visible = false; // just hides text (menu will open itself)
             });
           }
         };
         var createPlayer = require('../player.js');
-        self.players.add(createPlayer(game, player, checkForGameOver));
+        var newPlayer = self.players.add(createPlayer(game, player, checkForGameOver));
+        var pos = utils.getStage().spawnPoints[i];
+        newPlayer.position.x = pos.x;
+        newPlayer.position.y = pos.y;
       };
 
       //players.forEach(addPlayer);
       for (var i=0; i<settings.playerCount.selected; i++) {
-        addPlayer(players[i]);
+        addPlayer(players[i], i);
       }
 
       self.foreground = stageBuilder.buildForeground();
@@ -1217,7 +1213,7 @@ var Play = function(game) {
 
 module.exports = Play;
 
-},{"../data/font.js":3,"../data/players.js":4,"../data/settings":5,"../menu.js":8,"../player.js":9,"../sfx.js":10,"../stageBuilder.js":11}],13:[function(require,module,exports){
+},{"../data/font.js":3,"../data/players.js":4,"../data/settings":5,"../menu.js":8,"../player.js":9,"../sfx.js":10,"../stageBuilder.js":11,"../utils.js":14}],13:[function(require,module,exports){
 var Splash = function(game) {
   var splash = {
     init: function() {
@@ -1306,8 +1302,18 @@ var utils = {
   center: function(entity) {
     entity.anchor.setTo(0.5);
   },
+
+  // TODO: consider injecting dependencies
+  getStage: function() {
+    var stages = require('./data/stages');
+    var settings = require('./data/settings');
+    var stage = stages.filter(function(stage) {
+      return stage.name === settings.stage.selected;
+    })[0];
+    return stage;
+  },
 };
 
 module.exports = utils;
 
-},{}]},{},[7]);
+},{"./data/settings":5,"./data/stages":6}]},{},[7]);
