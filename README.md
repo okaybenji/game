@@ -1,3 +1,5 @@
+NOTE: This is an early version of what eventually became BITBOUT. Play the released game [here](http://okaybenji.itch.io/bitbout), and find the source code [here](http://github.com/okaybenji/bitbout).
+
 # GAME
 ### A competitive, single-screen, local competitive platformer
 
